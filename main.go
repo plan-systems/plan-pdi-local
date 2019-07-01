@@ -14,6 +14,7 @@ import (
 	ds "github.com/plan-systems/plan-pdi-local/datastore"
 
 	"github.com/plan-systems/plan-core/tools"
+	"github.com/plan-systems/plan-core/tools/ctx"
 	"github.com/plan-systems/plan-core/pdi"
 	"github.com/plan-systems/plan-core/plan"
 	"github.com/plan-systems/plan-core/repo"
@@ -33,7 +34,7 @@ func main() {
 
 	sn, err := NewSnode(*dataDir, *init)
 	if err != nil {
-		tools.Fatalf("startup failed: %v", err)
+		ctx.Fatalf("startup failed: %v", err)
 	}
 
 	if *init {
@@ -113,7 +114,7 @@ func loadGenesisInfo(inPathname string) (*CommunityGenesis, error) {
 
 // CommunityGenesis is a helper for creating a new community
 type CommunityGenesis struct {
-	tools.Logger
+	ctx.Logger
 
 	GenesisSeed		 	repo.GenesisSeed
 	MemberSeed			repo.MemberSeed

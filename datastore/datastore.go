@@ -18,14 +18,11 @@ import (
 
 	//"golang.org/x/sync/semaphore"
 
-	//ds "github.com/ipfs/go-datastore"
-	//dsq "github.com/ipfs/go-datastore/query"
-
 	"github.com/dgraph-io/badger"
 
 	"github.com/plan-systems/plan-core/pdi"
 	"github.com/plan-systems/plan-core/plan"
-	"github.com/plan-systems/plan-core/tools"
+	"github.com/plan-systems/plan-core/tools/ctx"
 )
 
 // StorageConfig contains core info about a db/store
@@ -37,7 +34,7 @@ type StorageConfig struct {
 
 // Store wraps a PLAN community UUID and a datastore
 type Store struct {
-	tools.Context
+	ctx.Context
 
 	AgentDesc string
 	Config    *StorageConfig

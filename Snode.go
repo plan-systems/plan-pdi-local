@@ -12,6 +12,7 @@ import (
 	"github.com/plan-systems/plan-core/pdi"
 	"github.com/plan-systems/plan-core/plan"
 	"github.com/plan-systems/plan-core/tools"
+	"github.com/plan-systems/plan-core/tools/ctx"
 
 	ds "github.com/plan-systems/plan-pdi-local/datastore"
 
@@ -33,9 +34,9 @@ const (
 //	 can be instantiated and offer service in parallel, this is not typical operation. Rather,
 //	 one instance runs and hosts service for one or more communities.
 type Snode struct {
-	tools.Context
+	ctx.Context
 
-	activeSessions tools.SessionGroup
+	activeSessions ctx.SessionGroup
 	BasePath       string
 	Config         Config
 	grpcServer     *grpc.Server
@@ -68,7 +69,7 @@ func NewSnode(
 ) (*Snode, error) {
 
 	sn := &Snode{
-		activeSessions: tools.NewSessionGroup(),
+		activeSessions: ctx.NewSessionGroup(),
 	}
 	sn.SetLogLabel("pdi-local")
 
