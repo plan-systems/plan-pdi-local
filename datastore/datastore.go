@@ -109,9 +109,7 @@ func (St *Store) ctxStartup() error {
 
 	switch St.Config.ImplName {
 	case "badger":
-		opts := badger.DefaultOptions
-		opts.Dir = path.Join(St.AbsPath, "txnDB")
-		opts.ValueDir = opts.Dir
+		opts := badger.DefaultOptions(path.Join(St.AbsPath, "txnDB"))
 		St.txnDB, err = badger.Open(opts)
 		if err != nil {
 			err = plan.Error(err, plan.FailedToLoadDatabase, "txnDB Open() failed")
