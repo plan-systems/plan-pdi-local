@@ -354,7 +354,7 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 	newCommunityHome := &chEntry{
 		whitelist: true,
 		chEpoch: &pdi.ChannelEpoch{
-			ChProtocol: repo.ChProtocolSpace,
+			ChProtocol: repo.ChProtocolLinks,
 			ACC: CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
 		},
 	}
@@ -426,7 +426,7 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 		if entry == newCommunityHome {
 			CG.GenesisSeed.CommunityEpoch.Links = append(CG.GenesisSeed.CommunityEpoch.Links, &plan.Link{
 				Label: "home",
-				Uri: fmt.Sprintf("/plan/./ch/%s", entryID.Str()),
+				Uri: fmt.Sprintf("/plan/./%s/ChID/%s", entry.chEpoch.ChProtocol, plan.BinEncode(entryID.ExtractChID())),
 			})
 		}
 
