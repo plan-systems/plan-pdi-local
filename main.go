@@ -88,6 +88,7 @@ func loadGenesisInfo(inPathname string) (*CommunityGenesis, error) {
 		return nil, plan.Error(nil, plan.AssertFailed, "missing valid community name")
 	}
 
+	// FUTURE: Community ID can also be a hash result of the genesis params so that a community's lookup name is locked in time.
 	needed := plan.CommunityIDSz - len(params.CommunityID)
 	if needed < 0 {
 		params.CommunityID = params.CommunityID[:plan.CommunityIDSz]
@@ -277,6 +278,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 
 			CG.MemberSeed.RepoSeed.SignedGenesisSeed = packingInfo.SignedBuf
 			CG.MemberSeed.RepoSeed.SuggestedDirName = CG.GenesisSeed.FormSuggestedDirName()
+			CG.MemberSeed.RepoSeed.CommunityName = CG.GenesisSeed.CommunityEpoch.CommunityName
 
 			// Write out the final MemberSeed file woohoo
 			if err == nil { 
