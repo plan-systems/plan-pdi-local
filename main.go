@@ -143,6 +143,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		},
 		MemberEpoch: &pdi.MemberEpoch{
 			MemberID: plan.GenesisMemberID, // TODO: randomize?  What ensures Proof of Independence Assurance?
+			Alias: "GENESIS",
 		},
 	}
 
