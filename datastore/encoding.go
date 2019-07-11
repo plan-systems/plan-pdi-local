@@ -97,14 +97,14 @@ func (enc *dsEncoder) ResetSigner(
 // EncodeToTxns -- See StorageProviderAgent.EncodeToTxns()
 func (enc *dsEncoder) EncodeToTxns(
 	inPayload []byte,
-	inPayloadEnc plan.Encoding,
+	inPayloadCodec plan.Multicodec,
 	inTransfers []*pdi.Transfer,
 	timeSealed int64,
 ) (*pdi.PayloadTxnSet, error) {
 
 	txnSet, err := pdi.SegmentIntoTxns(
 		inPayload,
-		inPayloadEnc,
+		inPayloadCodec,
 		enc.StorageEpoch.TxnMaxSize,
 	)
 	if err != nil {
@@ -147,7 +147,7 @@ func (enc *dsEncoder) EncodeToTxns(
 
 			packingInfo := ski.PackingInfo{}
 			err = enc.packer.PackAndSign(
-				plan.Encoding_TxnPayloadSegment,
+				plan.TxnSegmentCodec,
 				scrap[:headerSz],
 				seg.PayloadSeg,
 				pdi.URIDSz,

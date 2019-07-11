@@ -171,7 +171,7 @@ func txnEncodingTest(A *testSession, stEpoch *pdi.StorageEpoch) {
 
 			payloadTxns, err := encoder.EncodeToTxns(
 				payloadPb,
-				plan.Encoding_Unspecified,
+				plan.UnspecifiedCodec,
 				nil,
 				testTime+int64(j),
 			)
