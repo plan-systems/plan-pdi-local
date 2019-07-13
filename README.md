@@ -16,10 +16,15 @@ This repo is a prototype Persistent Data Interface (PDI) implementation used for
 
 ## Building
 
-Requires golang 1.11 or above. This project uses [go modules](https://github.com/golang/go/wiki/Modules), although we're not yet pinning the `go.mod` and `go.sum` files until the upstream dependency [`plan-core`](https://github.com/plan-systems/plan-core) has stabilized. There's no need to set your `GOPATH` to build this project.
+Requires golang 1.11 or above.
+
+We're in the process of convering this project to use [go modules](https://github.com/golang/go/wiki/Modules). In the meantime, you'll want to checkout this repo into your `GOPATH` (or the default `~/go`).
 
 ```
+mkdir -p ~/go/src/github.com/plan-systems
+cd ~/go/src/github.com/plan-systems
 git clone git@github.com:plan-systems/plan-pdi-local.git
-go test -v ./...
+cd plan-pnode
+go get ./...
 go build .
 ```
