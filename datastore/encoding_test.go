@@ -199,11 +199,11 @@ func txnEncodingTest(A *testSession, stEpoch *pdi.StorageEpoch) {
 				}
 			}
 
-			gTesting.Logf("#%d: Testing %d segment txn set (payloadSz=%d)", j, N, len(payloadIn.Bytes))
+			//gTesting.Logf("#%d: Testing %d segment txn set (payloadSz=%d)", j, N, len(payloadIn.Bytes))
 
 			for i := 0; i < N; i++ {
 				idx := swizzle[i]
-				gTesting.Logf("Decoding %d (%d) of %d", i, idx, N)
+				//gTesting.Logf("Decoding %d (%d) of %d", i, idx, N)
 				txnSet, err = collator.DecodeAndCollateTxn(decoder, &pdi.RawTxn{
 					Bytes: payloadTxns.Segs[idx].RawTxn,
 					URID:  payloadTxns.Segs[idx].Info.URID,
