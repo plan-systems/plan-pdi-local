@@ -35,8 +35,8 @@ func NewStorageEpoch(
 		skiSession,
 		inCommunity.FormGenesisKeyringName(),
 		ski.KeyInfo{
-			KeyType:   ski.KeyType_SigningKey,
-			CryptoKit: ski.CryptoKitID_NaCl,
+			KeyType: ski.KeyType_SigningKey,
+			CryptoKit: inCommunity.SigningCryptoKit,
 		},
 	)
 	if err != nil {
