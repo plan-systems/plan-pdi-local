@@ -105,6 +105,7 @@ func loadGenesisInfo(inPathname string) (*CommunityGenesis, error) {
 				CommunityName: params.CommunityName,
 				EntryHashKit: ski.HashKitID_Blake2b_256,
 				SigningCryptoKit: ski.CryptoKitID_ED25519,
+				DefaultCryptoKit: ski.CryptoKitID_NaCl,
 				MaxMemberClockDelta: 120,
 			},
 		},
@@ -136,7 +137,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		RepoSeed: &repo.RepoSeed{
 			Services: []*plan.ServiceInfo{
 				&plan.ServiceInfo{
-					Addr:	sn.Config.GrpcNetworkAddr,
+					Addr:	 sn.Config.GrpcNetworkAddr,
 					Network: sn.Config.GrpcNetworkName,
 				},
 			},  
@@ -161,7 +162,6 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		crand.Read(CG.GenesisSeed.StorageEpoch.CommunityChIDs)
 	}
 
-
    // Generate the first community key  :)
 	if err == nil {
 		CG.GenesisSeed.CommunityEpoch.KeyInfo, err = ski.GenerateNewKey(
@@ -169,7 +169,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 			CG.GenesisSeed.CommunityEpoch.CommunityKeyringName(),
 			ski.KeyInfo{
 				KeyType: ski.KeyType_SymmetricKey,
-				CryptoKit: ski.CryptoKitID_NaCl,
+				CryptoKit: CG.GenesisSeed.CommunityEpoch.DefaultCryptoKit,
 			},
 		)
 	}  
@@ -211,6 +211,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		var opOut *ski.CryptOpOut
 		opOut, err = genesisSKI.DoCryptOp(&ski.CryptOpArgs{
 			CryptOp: ski.CryptOp_EXPORT_USING_PW,
+			DefaultCryptoKit: CG.GenesisSeed.CommunityEpoch.DefaultCryptoKit,
 			PeerKey: []byte(pass),
 			TomeIn: &exportGuide,
 		})
@@ -284,15 +285,17 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 			// Write out the final MemberSeed file woohoo
 			if err == nil { 
 				buf, err = CG.MemberSeed.Marshal()
-
-				// TODO: encrypt this and put keys in it 
-
+				
                 outDir, _ := os.Getwd()
                 seedFilename := path.Join(outDir, CG.GenesisSeed.CommunityEpoch.CommunityName + ".seed.plan")
-                CG.Info(0, "writing genesis seed at ", seedFilename)
+                CG.Info(0, "writing genesis seed to ", seedFilename)
 				err = ioutil.WriteFile(seedFilename, buf, plan.DefaultFileMode)
 			}
 		}
+	}
+
+	if err == nil {
+		CG.Info(0, "finished creating community ", plan.BinEncode(CG.GenesisSeed.CommunityEpoch.CommunityID))
 	}
 
 	return err
@@ -418,7 +421,7 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 
 		// Set the channel IDs of the newly generated community channels
 		if i < 3 {
-			CG.Infof(0, "Created %s: %s", pdi.CommunityChID_name[int32(entry.assignTo)], entryID.Str())
+			CG.Infof(0, "created %s: %s", pdi.CommunityChID_name[int32(entry.assignTo)], entryID.Str())
 			copy(CG.GenesisSeed.StorageEpoch.CommunityChID(entry.assignTo), entryID.ExtractChID())
 		}
 
@@ -429,7 +432,7 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 		if entry == newCommunityHome {
 			CG.GenesisSeed.CommunityEpoch.Links = append(CG.GenesisSeed.CommunityEpoch.Links, &plan.Link{
 				Label: "home",
-				Uri: fmt.Sprintf("/plan/./%s/ChID/%s", entry.chEpoch.ChProtocol, plan.BinEncode(entryID.ExtractChID())),
+				URI: fmt.Sprintf("/plan/./%s/ChID/%s", entry.chEpoch.ChProtocol, plan.BinEncode(entryID.ExtractChID())),
 			})
 		}
 
