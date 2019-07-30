@@ -22,6 +22,8 @@ var gCommunityEpoch = pdi.CommunityEpoch{
 	CommunityID:   []byte{0, 1, 2, 3, 4, 5, 5, 7, 99, 123},
 	CommunityName: "encoding-test",
 	EntryHashKit:  ski.HashKitID_Blake2b_256,
+	DefaultCryptoKit: ski.CryptoKitID_NaCl,
+	SigningCryptoKit: ski.CryptoKitID_ED25519,
 }
 
 func TestVarAppendBuf(t *testing.T) {
