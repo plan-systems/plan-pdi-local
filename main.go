@@ -3,30 +3,30 @@ package main
 import (
 	//"context"
 	//"bufio"
+	crand "crypto/rand"
+	"encoding/json"
 	"flag"
-	"os"
-    "path"
 	"fmt"
 	"io/ioutil"
-	"encoding/json"
-	crand "crypto/rand"
+	"os"
+	"path"
 
 	ds "github.com/plan-systems/plan-pdi-local/datastore"
 
-	"github.com/plan-systems/plan-core/tools"
-	"github.com/plan-systems/plan-core/tools/ctx"
 	"github.com/plan-systems/plan-core/pdi"
 	"github.com/plan-systems/plan-core/plan"
 	"github.com/plan-systems/plan-core/repo"
 	"github.com/plan-systems/plan-core/ski"
 	"github.com/plan-systems/plan-core/ski/Providers/hive"
+	"github.com/plan-systems/plan-core/tools"
+	"github.com/plan-systems/plan-core/tools/ctx"
 )
 
 func main() {
 
-	init		:= flag.Bool  ( "init",		 false,				    "Creates <datadir> as a fresh/new datastore")
-	dataDir	    := flag.String( "datadir",	  "~/_PLAN_pdi-local",	"Specifies the path for all file access and storage")
-	genesisFile := flag.String( "genesis",	  "",				    "Creates a new store using the given community genesis json file" )
+	init := flag.Bool("init", false, "Creates <datadir> as a fresh/new datastore")
+	dataDir := flag.String("datadir", "~/_PLAN_pdi-local", "Specifies the path for all file access and storage")
+	genesisFile := flag.String("genesis", "", "Creates a new store using the given community genesis json file")
 
 	flag.Parse()
 	flag.Set("logtostderr", "true")
@@ -39,7 +39,7 @@ func main() {
 
 	if *init {
 		sn.Info(0, "init successful into ", sn.BasePath)
-	} else {  
+	} else {
 		if len(*genesisFile) > 0 {
 
 			CG, err := loadGenesisInfo(*genesisFile)
@@ -60,13 +60,10 @@ func main() {
 			} else {
 				sn.AttachInterruptHandler()
 				sn.CtxWait()
-			}	 
+			}
 		}
 	}
 }
-
-
-
 
 func loadGenesisInfo(inPathname string) (*CommunityGenesis, error) {
 
@@ -100,12 +97,12 @@ func loadGenesisInfo(inPathname string) (*CommunityGenesis, error) {
 
 	genesis := &CommunityGenesis{
 		GenesisSeed: repo.GenesisSeed{
-			CommunityEpoch:  &pdi.CommunityEpoch{
-				CommunityID: params.CommunityID,
-				CommunityName: params.CommunityName,
-				EntryHashKit: ski.HashKitID_Blake2b_256,
-				SigningCryptoKit: ski.CryptoKitID_ED25519,
-				DefaultCryptoKit: ski.CryptoKitID_NaCl,
+			CommunityEpoch: &pdi.CommunityEpoch{
+				CommunityID:         params.CommunityID,
+				CommunityName:       params.CommunityName,
+				EntryHashKit:        ski.HashKitID_Blake2b_256,
+				SigningCryptoKit:    ski.CryptoKitID_ED25519,
+				DefaultCryptoKit:    ski.CryptoKitID_NaCl,
 				MaxMemberClockDelta: 120,
 			},
 		},
@@ -118,17 +115,15 @@ func loadGenesisInfo(inPathname string) (*CommunityGenesis, error) {
 type CommunityGenesis struct {
 	ctx.Logger
 
-	GenesisSeed		 	repo.GenesisSeed
-	MemberSeed			repo.MemberSeed
-	txnsToCommit		[]pdi.RawTxn
+	GenesisSeed  repo.GenesisSeed
+	MemberSeed   repo.MemberSeed
+	txnsToCommit []pdi.RawTxn
 }
-
 
 // CreateNewCommunity creates a new community.
 //
 // Pre: CommunityEpoch is already set up
-func (CG *CommunityGenesis) CreateNewCommunity(
-	sn *Snode,
+func (CG *CommunityGenesis) CreateNewCommunity(sn *Snode,
 ) error {
 
 	CG.SetLogLabel("genesis")
@@ -137,19 +132,21 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		RepoSeed: &repo.RepoSeed{
 			Services: []*plan.ServiceInfo{
 				&plan.ServiceInfo{
-					Addr:	 sn.Config.GrpcNetworkAddr,
+					Addr:    sn.Config.GrpcNetworkAddr,
 					Network: sn.Config.GrpcNetworkName,
 				},
-			},  
+			},
 		},
 		MemberEpoch: &pdi.MemberEpoch{
 			MemberID: plan.GenesisMemberID, // TODO: randomize?  What ensures Proof of Independence Assurance?
-			Alias: "GENESIS",
+			Alias:    "genesis",
 		},
 	}
 
-	genesisSKI, err := hive.StartSession("", "", nil);
-	if err != nil { return err }
+	genesisSKI, err := hive.StartSession("", "", nil)
+	if err != nil {
+		return err
+	}
 
 	// Generate a new storage epoch
 	if err == nil {
@@ -157,22 +154,22 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 			genesisSKI,
 			CG.GenesisSeed.CommunityEpoch,
 		)
-		
+
 		// Generate random channel IDs for the community's global/shared channels
 		crand.Read(CG.GenesisSeed.StorageEpoch.CommunityChIDs)
 	}
 
-   // Generate the first community key  :)
+	// Generate the first community key  :)
 	if err == nil {
 		CG.GenesisSeed.CommunityEpoch.KeyInfo, err = ski.GenerateNewKey(
 			genesisSKI,
 			CG.GenesisSeed.CommunityEpoch.CommunityKeyringName(),
 			ski.KeyInfo{
-				KeyType: ski.KeyType_SymmetricKey,
+				KeyType:   ski.KeyType_SymmetricKey,
 				CryptoKit: CG.GenesisSeed.CommunityEpoch.DefaultCryptoKit,
 			},
 		)
-	}  
+	}
 
 	// Generate new member private keys
 	if err == nil {
@@ -186,12 +183,14 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 	}
 
 	pass, err := promptForPass()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Keep track of what keyrings we need to export, son.
 	{
 		exportGuide := ski.KeyTome{}
-		exportGuide.Keyrings = append(exportGuide.Keyrings, 
+		exportGuide.Keyrings = append(exportGuide.Keyrings,
 			&ski.Keyring{
 				Name: CG.GenesisSeed.CommunityEpoch.FormGenesisKeyringName(),
 			},
@@ -210,26 +209,25 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		)
 		var opOut *ski.CryptOpOut
 		opOut, err = genesisSKI.DoCryptOp(&ski.CryptOpArgs{
-			CryptOp: ski.CryptOp_EXPORT_USING_PW,
+			CryptOp:          ski.CryptOp_EXPORT_USING_PW,
 			DefaultCryptoKit: CG.GenesisSeed.CommunityEpoch.DefaultCryptoKit,
-			PeerKey: []byte(pass),
-			TomeIn: &exportGuide,
+			PeerKey:          []byte(pass),
+			TomeIn:           &exportGuide,
 		})
-		if err != nil { 
+		if err != nil {
 			return err
 		}
 
 		CG.MemberSeed.KeyTome = opOut.BufOut
 	}
 
-
 	// Emit all the genesis entries
 	if err == nil {
 		crypto := &pdi.MemberCrypto{
 			CommunityEpoch: *CG.GenesisSeed.CommunityEpoch,
 			StorageEpoch:   *CG.GenesisSeed.StorageEpoch,
-			TxnEncoder: ds.NewTxnEncoder(false, *CG.GenesisSeed.StorageEpoch),
-			MemberEpoch: *CG.MemberSeed.MemberEpoch,
+			TxnEncoder:     ds.NewTxnEncoder(false, *CG.GenesisSeed.StorageEpoch),
+			MemberEpoch:    *CG.MemberSeed.MemberEpoch,
 		}
 
 		err = crypto.StartSession(genesisSKI)
@@ -239,18 +237,17 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		crypto.EndSession("genesis complete")
 	}
 
-
 	if err == nil {
 		deposits := []*pdi.Transfer{
 			&pdi.Transfer{
-				To: genesisAddr,
+				To:  genesisAddr,
 				Kb:  1 << 40,
 				Ops: 1 << 40,
 			},
 		}
 
 		err = sn.CreateNewStore(
-			"badger", 
+			"badger",
 			deposits,
 			CG.txnsToCommit,
 			*CG.GenesisSeed.StorageEpoch,
@@ -265,7 +262,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 			genesisSKI,
 			ski.KeyRef{
 				KeyringName: CG.GenesisSeed.CommunityEpoch.FormGenesisKeyringName(),
-			}, 
+			},
 			CG.GenesisSeed.CommunityEpoch.EntryHashKit,
 			nil,
 		)
@@ -273,7 +270,7 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 		buf, _ := CG.GenesisSeed.Marshal()
 
 		// Pack and sign the genesis seed
-		if err == nil { 
+		if err == nil {
 
 			var packingInfo ski.PackingInfo
 			err = packer.PackAndSign(0, buf, nil, 0, &packingInfo)
@@ -283,12 +280,12 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 			CG.MemberSeed.RepoSeed.CommunityName = CG.GenesisSeed.CommunityEpoch.CommunityName
 
 			// Write out the final MemberSeed file woohoo
-			if err == nil { 
+			if err == nil {
 				buf, err = CG.MemberSeed.Marshal()
-				
-                outDir, _ := os.Getwd()
-                seedFilename := path.Join(outDir, CG.GenesisSeed.CommunityEpoch.CommunityName + ".seed.plan")
-                CG.Info(0, "writing genesis seed to ", seedFilename)
+
+				outDir, _ := os.Getwd()
+				seedFilename := path.Join(outDir, CG.GenesisSeed.CommunityEpoch.CommunityName+".seed.plan")
+				CG.Info(0, "writing genesis seed to ", seedFilename)
 				err = ioutil.WriteFile(seedFilename, buf, plan.DefaultFileMode)
 			}
 		}
@@ -301,18 +298,16 @@ func (CG *CommunityGenesis) CreateNewCommunity(
 	return err
 }
 
-
 type chEntry struct {
-	Info			pdi.EntryInfo
-	Body			[]byte
+	Info pdi.EntryInfo
+	Body []byte
 
-	whitelist		bool	
-	chEpoch			*pdi.ChannelEpoch
-	body			tools.Marshaller
-	assignTo		pdi.CommunityChID
-	parentEntry		*chEntry
+	whitelist   bool
+	chEpoch     *pdi.ChannelEpoch
+	body        tools.Marshaller
+	assignTo    pdi.CommunityChID
+	parentEntry *chEntry
 }
-
 
 func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 
@@ -320,9 +315,9 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 
 	newACC := &chEntry{
 		whitelist: true,
-		assignTo: pdi.CommunityChID_RootACC,
+		assignTo:  pdi.CommunityChID_RootACC,
 		chEpoch: &pdi.ChannelEpoch{
-			ChProtocol: repo.ChProtocolACC,
+			ChProtocol:         repo.ChProtocolACC,
 			DefaultAccessLevel: pdi.AccessLevel_READ_ACCESS,
 			AccessLevels: map[uint32]pdi.AccessLevel{
 				genesisID: pdi.AccessLevel_ADMIN_ACCESS,
@@ -332,25 +327,25 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 
 	newMemberReg := &chEntry{
 		whitelist: true,
-		assignTo: pdi.CommunityChID_MemberRegistry,
+		assignTo:  pdi.CommunityChID_MemberRegistry,
 		chEpoch: &pdi.ChannelEpoch{
 			ChProtocol: repo.ChProtocolMemberRegistry,
-			ACC: CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
+			ACC:        CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
 		},
 	}
 
 	newEpochHistory := &chEntry{
 		whitelist: true,
-		assignTo: pdi.CommunityChID_EpochHistory,
+		assignTo:  pdi.CommunityChID_EpochHistory,
 		chEpoch: &pdi.ChannelEpoch{
 			ChProtocol: repo.ChProtocolCommunityEpochs,
-			ACC: CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
+			ACC:        CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
 		},
 	}
 
 	postMember := &chEntry{
-		whitelist: true,
-		body: CG.MemberSeed.MemberEpoch,
+		whitelist:   true,
+		body:        CG.MemberSeed.MemberEpoch,
 		parentEntry: newMemberReg,
 		Info: pdi.EntryInfo{
 			ChannelID: CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_MemberRegistry),
@@ -361,14 +356,14 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 		whitelist: true,
 		chEpoch: &pdi.ChannelEpoch{
 			ChProtocol: repo.ChProtocolLinks,
-			ACC: CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
+			ACC:        CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_RootACC),
 		},
 	}
 
 	// Do this last so it contains all TIDs resulting from the above
 	postGenesisEpoch := &chEntry{
-		whitelist: true,
-		body: CG.GenesisSeed.CommunityEpoch,
+		whitelist:   true,
+		body:        CG.GenesisSeed.CommunityEpoch,
 		parentEntry: newEpochHistory,
 		Info: pdi.EntryInfo{
 			ChannelID: CG.GenesisSeed.StorageEpoch.CommunityChID(pdi.CommunityChID_EpochHistory),
@@ -389,14 +384,14 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 
 	for i, entry := range entries {
 
-		entry.Info.TIDs = make([]byte, pdi.EntryTID_NormalNumTIDs * plan.TIDSz)
+		entry.Info.TIDs = make([]byte, pdi.EntryTID_NormalNumTIDs*plan.TIDSz)
 		entry.Info.EntryID().SetTimeFS(nowFS)
 
-		if ! entry.whitelist {
-			copy(entry.Info.ACCEntryID(),			newACC.Info.EntryID())
+		if !entry.whitelist {
+			copy(entry.Info.ACCEntryID(), newACC.Info.EntryID())
 
 			if entry.parentEntry != nil {
-				copy(entry.Info.ChannelEpochID(),	entry.parentEntry.Info.EntryID())
+				copy(entry.Info.ChannelEpochID(), entry.parentEntry.Info.EntryID())
 			}
 		}
 
@@ -432,7 +427,7 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 		if entry == newCommunityHome {
 			CG.GenesisSeed.CommunityEpoch.Links = append(CG.GenesisSeed.CommunityEpoch.Links, &plan.Link{
 				Label: "home",
-				URI: fmt.Sprintf("/plan/./%s/ChID/%s", entry.chEpoch.ChProtocol, plan.BinEncode(entryID.ExtractChID())),
+				URI:   fmt.Sprintf("/plan/./%s/ChID/%s", entry.chEpoch.ChProtocol, plan.BinEncode(entryID.ExtractChID())),
 			})
 		}
 
@@ -453,12 +448,10 @@ func (CG *CommunityGenesis) emitGenesisEntries(mc *pdi.MemberCrypto) error {
 	return nil
 }
 
-
-
 func promptForPass() (string, error) {
 	return "pass1234", nil
-/*
-	reader := bufio.NewReader(os.Stdin)
-			fmt.Println("ENTER TO START")
-			reader.ReadString('\n')*/
+	/*
+		reader := bufio.NewReader(os.Stdin)
+				fmt.Println("ENTER TO START")
+				reader.ReadString('\n')*/
 }
