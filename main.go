@@ -157,6 +157,11 @@ func (CG *CommunityGenesis) CreateNewCommunity(sn *Snode,
 
 		// Generate random channel IDs for the community's global/shared channels
 		crand.Read(CG.GenesisSeed.StorageEpoch.CommunityChIDs)
+
+		CG.Info(0, "GenesisSeed.CommunityEpoch.FormGenesisKeyringName() => ", plan.BinEncode(CG.GenesisSeed.CommunityEpoch.FormGenesisKeyringName()))
+		CG.Info(0, "GenesisSeed.CommunityEpoch.CommunityKeyringName()   => ", plan.BinEncode(CG.GenesisSeed.CommunityEpoch.CommunityKeyringName()))
+
+		CG.Info(0, "created StorageEpoch.OriginKey: ", CG.GenesisSeed.StorageEpoch.OriginKey.DescStr(true))
 	}
 
 	// Generate the first community key  :)
@@ -256,16 +261,20 @@ func (CG *CommunityGenesis) CreateNewCommunity(sn *Snode,
 
 	// Write out the MemberSeed file
 	if err == nil {
+		var seedKeyInfo ski.KeyInfo
 
+		genesisKeyringName := CG.GenesisSeed.CommunityEpoch.FormGenesisKeyringName()
 		packer := ski.NewPacker(false)
 		err = packer.ResetSession(
 			genesisSKI,
 			ski.KeyRef{
-				KeyringName: CG.GenesisSeed.CommunityEpoch.FormGenesisKeyringName(),
+				KeyringName: genesisKeyringName,
 			},
 			CG.GenesisSeed.CommunityEpoch.EntryHashKit,
-			nil,
+			&seedKeyInfo,
 		)
+
+		CG.Info(0, "signing seed with ", seedKeyInfo.DescStr(true), " on keyring ", plan.BinEncode(genesisKeyringName))
 
 		buf, _ := CG.GenesisSeed.Marshal()
 
@@ -278,6 +287,10 @@ func (CG *CommunityGenesis) CreateNewCommunity(sn *Snode,
 			CG.MemberSeed.RepoSeed.SignedGenesisSeed = packingInfo.SignedBuf
 			CG.MemberSeed.RepoSeed.SuggestedDirName = CG.GenesisSeed.FormSuggestedDirName()
 			CG.MemberSeed.RepoSeed.CommunityName = CG.GenesisSeed.CommunityEpoch.CommunityName
+
+			if err == nil {
+				_, err = repo.ExtractAndVerifyGenesisSeed(packingInfo.SignedBuf)
+			}
 
 			// Write out the final MemberSeed file woohoo
 			if err == nil {
