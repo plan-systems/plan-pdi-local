@@ -7,7 +7,7 @@
 P  L  A  N etwork
 ```
 
-[![ci.machinistlabs.com](https://ci.machinistlabs.com/api/v1/teams/plan/pipelines/plan/jobs/plan-pdi-local/badge)](https://ci.machinistlabs.com/teams/plan/pipelines/plan)
+![](https://github.com/plan-systems/plan-pdi-local/workflows/Build%20and%20test/badge.svg)
 
 [PLAN](http://plan-systems.org) is a free and open platform for groups to securely communicate, collaborate, and coordinate projects and activities.
 

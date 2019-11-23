@@ -7,7 +7,11 @@ repo := plan-pdi-local
 # ----------------------------------------
 # dev/test
 
-.PHONY: check fmt lint test
+.PHONY: check fmt lint test workspace
+
+workspace:
+	git clone https://github.com/plan-systems/plan-core.git \
+		../plan-core
 
 check: fmt lint test
 
